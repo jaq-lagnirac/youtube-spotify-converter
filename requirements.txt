@@ -1,2 +1,2 @@
-google_api_python_client==2.91.0
-python-dotenv==1.0.0
+pytube==15.0.0
+pytube3==9.6.4
