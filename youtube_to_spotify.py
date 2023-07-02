@@ -9,4 +9,12 @@ import argparse
 import logging
 
 # Youtube Library
-from pytube import Youtube, Playlist
+import pytube
+
+url = 'https://www.youtube.com/playlist?list=PLvaO_paR56p-SNDvQNboq2BXniEfxj8gQ'
+
+playlist = pytube.Playlist(url)
+
+print(f'Playlist - {playlist.title}')
+for video in playlist.videos:
+    print(f'Video - {video.title} - {video.author}')
