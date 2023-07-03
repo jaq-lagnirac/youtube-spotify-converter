@@ -8,28 +8,37 @@ import sys
 import argparse
 import logging
 
-# Library to load in .env
-from dotenv import load_dotenv
+from time import time
 
-# Youtube API client library
-import googleapiclient.discovery
+# Youtube Library
+import pytube
 
-# Youtube API info
-api_service_name = 'youtube'
-api_version = 'v3'
+url = 'https://www.youtube.com/playlist?list=PLvaO_paR56p-SNDvQNboq2BXniEfxj8gQ'
 
-# Youtube API key
-load_dotenv()
-YOUTUBE_TOKEN = os.getenv('YOUTUBE_TOKEN')
+playlist = pytube.Playlist(url)
 
-# API client
-youtube = googleapiclient.discovery.build(api_service_name,
-                                          api_version,
-                                          developerKey = YOUTUBE_TOKEN)
+def extract_info(video):
+    info_dict = {
+        'title' : video.title,
+        'author' : video.author
+    }
+    return info_dict
 
-request = youtube.playlistItems().list()
+start = time()
 
-# Query execution
-response = request.execute()
+videos_info = []
+print(f'Playlist - {playlist.title}')
+for video in playlist.videos:
+    try:
+        video.check_availability()
+        print(f'Extracting:\tTitle: {video.title}\n\t\tAuthor: {video.author}')
+        videos_info.append(extract_info(video))
+    except Exception as e:
+        print(f'Exception occured:\t{e}\n\t\tMessage: {e.message}')
+        continue
 
-print(response)
+elapsed = time() - start
+print(f'Elapsed: {elapsed : .2f} secs')
+
+for info in videos_info:
+    print(info)
