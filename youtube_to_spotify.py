@@ -7,27 +7,43 @@ import os
 import sys
 import argparse
 import logging
-
-from time import time
+from time import time, sleep
 
 # Youtube Library
 import pytube
+
+# Regular expressions
+import re
 
 url = 'https://www.youtube.com/playlist?list=PLvaO_paR56p-SNDvQNboq2BXniEfxj8gQ'
 
 playlist = pytube.Playlist(url)
 
 def extract_info(video):
+    # cleans input
+    title = (video.title).lower()
+    author = (video.author).lower()
+    title.replace('official', '')
+    title.replace('lyric', '')
+    title.replace('audio', '')
+    title.replace('video', '')
+    title.replace('animated', '')
+
+    re.sub('\(\s*\)', '', title)
+
+    # assembles info into a dict
     info_dict = {
-        'title' : video.title,
-        'author' : video.author
+        'title' : title,
+        'author' : author
     }
     return info_dict
 
-start = time()
+start_time = time()
 
+# Extracts video title and author from Youtube playlist
 videos_info = []
-print(f'Playlist - {playlist.title}')
+print(f'Extracting video info from playlist - {playlist.title}')
+sleep(3)
 for video in playlist.videos:
     try:
         video.check_availability()
@@ -37,8 +53,30 @@ for video in playlist.videos:
         print(f'Exception occured:\t{e}\n\t\tMessage: {e.message}')
         continue
 
-elapsed = time() - start
-print(f'Elapsed: {elapsed : .2f} secs')
+extraction_chkpt = time()
+extraction_elapsed = extraction_chkpt - start_time
+print(f'Extraction complete.')
+print(f'Videos extracted: {len(videos_info)}')
+print(f'Extraction elapsed time: {extraction_elapsed : .3f} secs')
+sleep(3)
 
-for info in videos_info:
+print('Removing duplicates.')
+sleep(3)
+begin_set_chkpt = time()
+
+# Removes duplicate extracted info (turns info list into a set)
+info_set = []
+[info_set.append(x) for x in videos_info if x not in info_set]
+
+set_chkpt = time()
+set_elapsed = set_chkpt - begin_set_chkpt
+duplicates_removed = len(info_set) - len(videos_info)
+if duplicates_removed == 1:
+    print('Removed 1 duplicate.')
+else:
+    print(f'Removed {duplicates_removed} duplicates.')
+print(f'Unique videos: {len(info_set)}')
+print(f'Removal elapsed time: {set_elapsed : .3f} secs')
+
+for info in info_set:
     print(info)
