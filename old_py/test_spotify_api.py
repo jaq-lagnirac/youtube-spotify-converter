@@ -1,3 +1,6 @@
+# Justin Caringal
+# Based off tutorial--> https://www.youtube.com/watch?v=WAmEZBEeNmg
+
 from dotenv import load_dotenv
 import os
 import base64
