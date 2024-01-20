@@ -4,6 +4,7 @@
 import sys
 from colorama import Fore, Style
 
+
 def red(text):
     """ Streamlines red text
     
@@ -17,6 +18,7 @@ def red(text):
 
     return Fore.RED + text + Style.RESET_ALL
 
+
 def green(text):
     """ Streamlines green text
     
@@ -29,6 +31,21 @@ def green(text):
     """
 
     return Fore.GREEN + text + Style.RESET_ALL
+
+
+def cyan(text):
+    """ Streamlines cyan text
+    
+    Args: 
+        text (str): the text to be colored
+
+    Returns:
+        str: A string colored to the desired shade
+    
+    """
+
+    return Fore.CYAN + text + Style.RESET_ALL
+
 
 def error_exit(message):
     """ Standardizes error
