@@ -2,20 +2,12 @@
 # A script to extract a Youtube playlist into
 # a text format
 
+import pytube # accesses youtube
+import re # clean up names
+import json # output extracted information
+
 # custom error messaging and text coloring
 from colorful_errors import error_exit, red, green
-
-# Elapsed time
-from time import time
-
-# Youtube Library
-import pytube
-
-# Regex to clean up names
-import re
-
-# JSON to output extracted information
-import json
 
 # Multithreading Libraries
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -125,7 +117,6 @@ def main():
 
     # trims name to create JSON file
     json_name = playlist_dict['playlist_title']
-    json_name = playlist.title
     json_name = re.sub('[^0-9a-zA-Z ]+', '', json_name)
     json_name = json_name.replace(' ', '_')
 
