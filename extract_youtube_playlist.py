@@ -13,32 +13,26 @@ from colorful_errors import error_exit, red, green
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import multiprocessing
 
-def get_playlist():
+def get_playlist(url):
     """ Organizes user input
     
     A function which prompts the user for a YouTube
     playlist URL and returns a pytube playlist object
+
+    Args:
+        url (str): a URL for a Youtube playlist
     
     Returns:
         Playlist: returns a pytube playlist object
     
     """
-    
-    VALID_PLAYLIST_URL = 'youtube.com/playlist?'
-    url = input(green('Copy-paste a Youtube Playlist URL here: '))
-
-    while VALID_PLAYLIST_URL not in url:
-        print(red(f'Invalid YouTube Playlist URL (Must contain {VALID_PLAYLIST_URL})'))
-        url = input('Try again: ')
-    
-    print('Valid URL inputted.')
 
     try:
         playlist = pytube.Playlist(url)
     except:
         error_exit(f'Unable to generate pytube Playlist object from {url}')
     
-    return(playlist)
+    return playlist
 
 
 def extract_video_info(video):
@@ -109,8 +103,17 @@ def main():
     
     # https://www.youtube.com/playlist?list=PLvaO_paR56p-SNDvQNboq2BXniEfxj8gQ
 
+    VALID_PLAYLIST_URL = 'youtube.com/playlist?'
+    url = input(green('Copy-paste a Youtube Playlist URL here: '))
+
+    while VALID_PLAYLIST_URL not in url:
+        print(red(f'Invalid YouTube Playlist URL (Must contain {VALID_PLAYLIST_URL})'))
+        url = input('Try again: ')
+    
+    print('Valid URL inputted.')
+
     # gets playlist from URL
-    playlist = get_playlist()
+    playlist = get_playlist(url)
 
     # generates dictionary from playlist object
     playlist_dict = process_playlist(playlist)
