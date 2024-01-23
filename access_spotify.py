@@ -110,6 +110,29 @@ def convert_youtube_to_spotify():
         print(red('URL or JSON path not included.'))
         return 'URL or JSON path not included.'
     
+    extracted_songs = playlist_dict['videos_info']
+
+    # iterates through video info to creacte search queries to Spotify API
+    # URI - resource identifiers for objects in Spotify
+    track_uris = []
+    queries_not_found = []
+    not_found_count = 0
+    for song in extracted_songs:
+        # creates query and executes API call
+        search_query = f"{song['title']} {song['author']}"
+        search_result = sp.search(search_query,
+                                  limit=1,
+                                  offset=0,
+                                  type='track')
+
+        # examines search result, Exception created when bad result received
+        # i.e. a query failed to return a even a single track
+        try: # query successful
+            track_uri = search_result['tracks']['items'][0]['uri']
+            track_uris.append(track_uri)
+        except: # query not successful (list index out of range)
+            queries_not_found.append(search_query)
+            not_found_count += 1
 
     return 'Playlist successfully converted.'
 
@@ -179,6 +202,7 @@ def url_extraction(url):
     playlist_dict = process_playlist(playlist)
 
     return playlist_dict
+
 
 def json_extraction(json_path):
     """Conducts JSON extraction
