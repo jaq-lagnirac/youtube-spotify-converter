@@ -5,13 +5,24 @@
 import pytube # accesses youtube
 import re # clean up names
 import json # output extracted information
+import argparse
 
 # custom error messaging and text coloring
-from colorful_errors import error_exit, red, green
+from colorful_errors import error_exit, red, green, cyan
 
 # Multithreading Libraries
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import multiprocessing
+
+parser = argparse.ArgumentParser()
+parser.add_argument('url',
+                    nargs='?',
+                    help='Youtube playlist URL')
+parser.add_argument('-p',
+                    '--performance',
+                    action='store_true',
+                    help='Enables performance mode. Does not maintain playlist order.')
+args = parser.parse_args()
 
 def get_playlist(url):
     """ Organizes user input
@@ -60,7 +71,43 @@ def process_playlist(playlist):
     """Organizes playlist extraction
     
     A function to extract video information from a playlist
-    using a ThreadPool
+    
+    Args:
+        playlist (Playlist): A pytube Playlist object
+
+    Returns:
+        dict: A dictionary containing the relevant playlist information
+            
+    """
+
+    print(f'Playlist: {playlist.title}')
+    
+    videos_info = []
+    errors = []
+    for video in playlist.videos:
+        try:
+            print(f'Title: {video.title} - Author: {video.author}')
+            video_dict = extract_video_info(video)
+            videos_info.append(video_dict)
+        except:
+            print(f'-----Error with {video.url}-----')
+            errors.append(video)
+    
+    playlist_dict = {
+        'playlist_title' : playlist.title,
+        'videos_info' : videos_info,
+        'errors' : errors
+    }
+
+    return playlist_dict
+
+
+def process_playlist_multithreaded(playlist):
+    """Organizes playlist extraction with multithreading
+    
+    A function to extract video information from a playlist
+    using a ThreadPool. DOES NOT MAINTAIN ORDER OF THE INPUTTED
+    PLAYLIST
     
     Args:
         playlist (Playlist): A pytube Playlist object
@@ -79,7 +126,7 @@ def process_playlist(playlist):
         for video in playlist.videos:
             try:
                 processes.append(executor.submit(extract_video_info, video))
-                print(f'Title: {video.title} - Author: {video.author}')
+                #print(f'Title: {video.title} - Author: {video.author}')
             except:
                 print(f'-----Error with {video.url}-----')
                 errors.append(video)
@@ -104,19 +151,28 @@ def main():
     # https://www.youtube.com/playlist?list=PLvaO_paR56p-SNDvQNboq2BXniEfxj8gQ
 
     VALID_PLAYLIST_URL = 'youtube.com/playlist?'
-    url = input(green('Copy-paste a Youtube Playlist URL here: '))
+    
+    url = args.url
+
+    if not url: # if no URL is included with argparse
+        url = input(green('Copy-paste a Youtube playlist URL here: '))
 
     while VALID_PLAYLIST_URL not in url:
         print(red(f'Invalid YouTube Playlist URL (Must contain {VALID_PLAYLIST_URL})'))
         url = input('Try again: ')
     
-    print('Valid URL inputted.')
+    print(cyan('Valid URL inputted.'))
 
     # gets playlist from URL
     playlist = get_playlist(url)
 
     # generates dictionary from playlist object
-    playlist_dict = process_playlist(playlist)
+    if args.performance:
+        print(cyan('Performance mode enabled. Playlist order will not be maintained.'))
+        playlist_dict = process_playlist_multithreaded(playlist)
+    else:
+        print(cyan('Deep-copy extraction enabled. Playlist order will be maintained.'))
+        playlist_dict = process_playlist(playlist)
 
     # trims name to create JSON file
     json_name = playlist_dict['playlist_title']
@@ -128,6 +184,8 @@ def main():
         outfile.write(json.dumps(playlist_dict,
                                  ensure_ascii=False,
                                  indent=4))
+    
+    print(green(f'Extraction complete, data saved in {json_name}.json'))
 
 
 if __name__ == '__main__':
