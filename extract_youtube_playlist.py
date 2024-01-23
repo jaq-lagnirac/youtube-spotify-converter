@@ -14,7 +14,11 @@ from colorful_errors import error_exit, red, green, cyan
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import multiprocessing
 
-parser = argparse.ArgumentParser()
+DESCRIPTION = '''
+'''
+EPILOG = '''
+'''
+parser = argparse.ArgumentParser(description=DESCRIPTION, epilog=EPILOG)
 parser.add_argument('url',
                     nargs='?',
                     help='Youtube playlist URL')

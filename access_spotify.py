@@ -11,13 +11,22 @@ import spotipy # streamlines access to Spotify API
 from spotipy.oauth2 import SpotifyOAuth # authenticates permissions
 
 from colorful_errors import error_exit, red, green, cyan
-from extract_youtube_playlist import get_playlist, process_playlist
+from extract_youtube_playlist import get_playlist, \
+    process_playlist, process_playlist_multithreaded
 
 # sets up command line arguments
 import argparse
-parser = argparse.ArgumentParser()
+DESCRIPTION = '''
+'''
+EPILOG = '''
+'''
+parser = argparse.ArgumentParser(description=DESCRIPTION, epilog=EPILOG)
 parser.add_argument('-u', '--url', help='YouTube playlist URL')
 parser.add_argument('-j', '--json', help='Relative JSON path')
+parser.add_argument('-p',
+                    '--performance',
+                    action='store_true',
+                    help='Enables performance mode. Does not maintain playlist order.')
 args = parser.parse_args()
 URL = args.url
 JSON = args.json
@@ -199,7 +208,12 @@ def url_extraction(url):
     playlist = get_playlist(url)
 
     # generates dictionary from playlist object
-    playlist_dict = process_playlist(playlist)
+    if args.performance:
+        print(cyan('Performance mode enabled. Playlist order will not be maintained.'))
+        playlist_dict = process_playlist_multithreaded(playlist)
+    else:
+        print(cyan('Deep-copy extraction enabled. Playlist order will be maintained.'))
+        playlist_dict = process_playlist(playlist)
 
     return playlist_dict
 
