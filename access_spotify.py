@@ -76,6 +76,8 @@ def redirect_page():
 # route to convert a Youtube playlist into a Spotify playlist
 @app.route('/YouTubeToSpotify')
 def convert_youtube_to_spotify():
+
+    ### AUTH BOILERPLATE
     try: 
         # get the token info from the session
         token_info = get_token()
@@ -87,6 +89,10 @@ def convert_youtube_to_spotify():
     # create a Spotipy instance with the access token
     sp = spotipy.Spotify(auth=token_info['access_token'])
 
+
+    ### PLAYLIST CONVERSION
+
+    # EXTRACTION
     # extracts dict based on user input
     playlist_dict = None
     if URL:
@@ -116,8 +122,10 @@ def convert_youtube_to_spotify():
     
     extracted_songs = playlist_dict['videos_info']
 
-    print(green('Extraction complete. Initiating Spotify API track queries.'))
+    print(green(f'Extraction complete. Extracted {len(extracted_songs)} songs.'))
+    print(cyan('Initiating Spotify API track queries.'))
 
+    # QUERYING
     # iterates through video info to creacte search queries to Spotify API
     # URI - resource identifiers for objects in Spotify
     track_uris = []
@@ -143,7 +151,8 @@ def convert_youtube_to_spotify():
             not_found_count += 1
             print(red('Failed.'))
 
-    print(green('Track queries complete. Removing duplicates.'))
+    print(f'Track queries complete. {green(str(len(track_uris)))} successes, {red(str(not_found_count))} failures.')
+    print(cyan('Removing duplicates.'))
     
     return track_uris
 
