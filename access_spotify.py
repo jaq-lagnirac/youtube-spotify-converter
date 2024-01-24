@@ -10,26 +10,21 @@ from time import time
 import spotipy # streamlines access to Spotify API
 from spotipy.oauth2 import SpotifyOAuth # authenticates permissions
 
-from colorful_errors import error_exit, red, green, cyan
-from extract_youtube_playlist import get_playlist, \
-    process_playlist, process_playlist_multithreaded
-
 # sets up command line arguments
 import argparse
 DESCRIPTION = '''
 '''
 EPILOG = '''
 '''
-parser = argparse.ArgumentParser(description=DESCRIPTION, epilog=EPILOG)
-parser.add_argument('-u', '--url', help='YouTube playlist URL')
-parser.add_argument('-j', '--json', help='Relative JSON path')
-parser.add_argument('-p',
-                    '--performance',
-                    action='store_true',
-                    help='Enables performance mode. Does not maintain playlist order.')
-args = parser.parse_args()
-URL = args.url
-JSON = args.json
+
+# initialized with dummy variables for scope resolution
+URL = None
+JSON = None
+
+# custom libraries
+from colorful_errors import error_exit, red, green, cyan
+from extract_youtube_playlist import get_playlist, \
+    process_playlist, process_playlist_multithreaded
 
 # loads in private .env variables
 from dotenv import load_dotenv
@@ -121,6 +116,8 @@ def convert_youtube_to_spotify():
     
     extracted_songs = playlist_dict['videos_info']
 
+    print(green('Extraction complete. Initiating Spotify API track queries.'))
+
     # iterates through video info to creacte search queries to Spotify API
     # URI - resource identifiers for objects in Spotify
     track_uris = []
@@ -129,6 +126,7 @@ def convert_youtube_to_spotify():
     for song in extracted_songs:
         # creates query and executes API call
         search_query = f"{song['title']} {song['author']}"
+        print(f'Querying: {cyan(search_query)}', end=' - Status: ')
         search_result = sp.search(search_query,
                                   limit=1,
                                   offset=0,
@@ -139,9 +137,15 @@ def convert_youtube_to_spotify():
         try: # query successful
             track_uri = search_result['tracks']['items'][0]['uri']
             track_uris.append(track_uri)
+            print(green('Success.'))
         except: # query not successful (list index out of range)
             queries_not_found.append(search_query)
             not_found_count += 1
+            print(red('Failed.'))
+
+    print(green('Track queries complete. Removing duplicates.'))
+    
+    return track_uris
 
     return 'Playlist successfully converted.'
 
@@ -250,6 +254,17 @@ def json_extraction(json_path):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=DESCRIPTION, epilog=EPILOG)
+    parser.add_argument('-u', '--url', help='YouTube playlist URL')
+    parser.add_argument('-j', '--json', help='Relative JSON path')
+    parser.add_argument('-p',
+                        '--performance',
+                        action='store_true',
+                        help='Enables performance mode. Does not maintain playlist order.')
+    args = parser.parse_args()
+    URL = args.url
+    JSON = args.json
+
     if not URL and not JSON:
         error_exit('URL or JSON path not included.')
     app.run(debug=True)

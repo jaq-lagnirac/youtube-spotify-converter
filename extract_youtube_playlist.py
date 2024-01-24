@@ -18,15 +18,7 @@ DESCRIPTION = '''
 '''
 EPILOG = '''
 '''
-parser = argparse.ArgumentParser(description=DESCRIPTION, epilog=EPILOG)
-parser.add_argument('url',
-                    nargs='?',
-                    help='Youtube playlist URL')
-parser.add_argument('-p',
-                    '--performance',
-                    action='store_true',
-                    help='Enables performance mode. Does not maintain playlist order.')
-args = parser.parse_args()
+
 
 def get_playlist(url):
     """ Organizes user input
@@ -193,4 +185,13 @@ def main():
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=DESCRIPTION, epilog=EPILOG)
+    parser.add_argument('url',
+                        nargs='?',
+                        help='Youtube playlist URL')
+    parser.add_argument('-p',
+                        '--performance',
+                        action='store_true',
+                        help='Enables performance mode. Does not maintain playlist order.')
+    args = parser.parse_args()
     main()
