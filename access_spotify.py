@@ -122,7 +122,7 @@ def convert_youtube_to_spotify():
     
     extracted_songs = playlist_dict['videos_info']
 
-    print(green(f'Extraction complete. Extracted {len(extracted_songs)} songs.'))
+    print(f'Extraction complete. Extracted {green(len(extracted_songs))} songs.')
     print(cyan('Initiating Spotify API track queries.'))
 
     # QUERYING
@@ -151,7 +151,7 @@ def convert_youtube_to_spotify():
             not_found_count += 1
             print(red('Failed.'))
 
-    print(f'Track queries complete. {green(str(len(track_uris)))} successes, {red(str(not_found_count))} failures.')
+    print(f'Track queries complete. {green(len(track_uris))} successes, {red(not_found_count)} failures.')
     print(cyan('Removing duplicates.'))
     
     return track_uris

@@ -16,7 +16,7 @@ def red(text):
     
     """
 
-    return Fore.RED + text + Style.RESET_ALL
+    return Fore.RED + str(text) + Style.RESET_ALL
 
 
 def green(text):
@@ -30,7 +30,7 @@ def green(text):
     
     """
 
-    return Fore.GREEN + text + Style.RESET_ALL
+    return Fore.GREEN + str(text) + Style.RESET_ALL
 
 
 def cyan(text):
@@ -44,7 +44,7 @@ def cyan(text):
     
     """
 
-    return Fore.CYAN + text + Style.RESET_ALL
+    return Fore.CYAN + str(text) + Style.RESET_ALL
 
 
 def error_exit(message):
