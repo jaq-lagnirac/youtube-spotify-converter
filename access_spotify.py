@@ -20,6 +20,7 @@ EPILOG = '''
 # initialized with dummy variables for scope resolution
 URL = None
 JSON = None
+MAX_REPEAT_QUERIES = None
 
 # custom libraries
 from colorful_errors import error_exit, red, green, cyan
@@ -32,6 +33,7 @@ load_dotenv()
 CLIENT_ID = os.getenv('CLIENT_ID')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET')
 FLASK_KEY = os.getenv('FLASK_KEY')
+SPOTIFY_USER_ID = os.getenv('SPOTIFY_USER_ID')
 
 # configures Flask app
 from flask import Flask, request, url_for, session, redirect # accesses HTTP requests
@@ -120,9 +122,19 @@ def convert_youtube_to_spotify():
         print(red('URL or JSON path not included.'))
         return 'URL or JSON path not included.'
     
+    playlist_title = playlist_dict['playlist_title']
     extracted_songs = playlist_dict['videos_info']
 
     print(f'Extraction complete. Extracted {green(len(extracted_songs))} songs.')
+
+    # checks to see if playlist already exists in current users playlists,
+    # exits program to prevent override and unwanted appends
+    current_playlists =  sp.current_user_playlists()['items']
+    for playlist in current_playlists:
+        if(playlist['name'] == playlist_title):
+            print(f'Playlist \"{cyan(playlist_title)}\" already exists.')
+            return f'Playlist \"{playlist_title}\" already exists.'
+
     print(cyan('Initiating Spotify API track queries.'))
 
     # QUERYING
@@ -134,27 +146,59 @@ def convert_youtube_to_spotify():
     for song in extracted_songs:
         # creates query and executes API call
         search_query = f"{song['title']} {song['author']}"
-        print(f'Querying: {cyan(search_query)}', end=' - Status: ')
-        search_result = sp.search(search_query,
-                                  limit=1,
-                                  offset=0,
-                                  type='track')
+        print(f'Querying: {cyan(search_query)}', end=' - Status - ')
+        for attempt in range(1, MAX_REPEAT_QUERIES + 1):
+            search_result = sp.search(search_query,
+                                    limit=1,
+                                    offset=0,
+                                    type='track')
+            
+            print(f'Attempt {attempt}: ', end='')
 
-        # examines search result, Exception created when bad result received
-        # i.e. a query failed to return a even a single track
-        try: # query successful
-            track_uri = search_result['tracks']['items'][0]['uri']
-            track_uris.append(track_uri)
-            print(green('Success.'))
-        except: # query not successful (list index out of range)
-            queries_not_found.append(search_query)
-            not_found_count += 1
-            print(red('Failed.'))
+            # examines search result, Exception created when bad result received
+            # i.e. a query failed to return a even a single track
+            try: # query successful
+                track_uri = search_result['tracks']['items'][0]['uri']
+                track_uris.append(track_uri)
+                print(green('Success.'), end='')
+                break
+            except: # query not successful (list index out of range)
+                queries_not_found.append(search_query)
+                not_found_count += 1
+                print(red('Failed.'), end='')
+        print('') # prints newline
 
     print(f'Track queries complete. {green(len(track_uris))} successes, {red(not_found_count)} failures.')
-    print(cyan('Removing duplicates.'))
     
-    return track_uris
+    # removes duplicates while preserving order using list comprehension
+    print(cyan('Removing duplicates.'))
+    trimmed_uris = []
+    [trimmed_uris.append(uri) for uri in track_uris if uri not in trimmed_uris]
+    tracks_removed = len(track_uris) - len(trimmed_uris)
+    print(f'{red(tracks_removed)} tracks removed. New length: {green(len(trimmed_uris))}')
+
+    # creates playlist and extracts ID
+    print(f'Creating playlist {cyan(playlist_title)}')
+    sp.user_playlist_create(user=SPOTIFY_USER_ID,
+                            name=playlist_title,
+                            public=True,
+                            collaborative=False,
+                            description='This playlist was created by Jaq\'s YtS bot.')
+    # finds new playlist created and extracts playlist ID
+    current_playlists =  sp.current_user_playlists()['items']
+    new_playlist_id = None
+    for playlist in current_playlists:
+        if(playlist['name'] == playlist_title):
+            new_playlist_id = playlist['id']
+            print(cyan(f'Successfully created and found playlist.'))
+            break
+    
+    sp.user_playlist_add_tracks(SPOTIFY_USER_ID,
+                                new_playlist_id,
+                                trimmed_uris,
+                                None)
+
+    return playlist_dict
 
     return 'Playlist successfully converted.'
 
@@ -266,6 +310,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=DESCRIPTION, epilog=EPILOG)
     parser.add_argument('-u', '--url', help='YouTube playlist URL')
     parser.add_argument('-j', '--json', help='Relative JSON path')
+    parser.add_argument('-m',
+                        '--max-repeats',
+                        default=3,
+                        type=int,
+                        help='Maximum times to allow failed query.')
     parser.add_argument('-p',
                         '--performance',
                         action='store_true',
@@ -273,6 +322,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     URL = args.url
     JSON = args.json
+    MAX_REPEAT_QUERIES = args.max_repeats
 
     if not URL and not JSON:
         error_exit('URL or JSON path not included.')
