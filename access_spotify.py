@@ -193,10 +193,16 @@ def convert_youtube_to_spotify():
             print(cyan(f'Successfully created and found playlist.'))
             break
     
-    sp.user_playlist_add_tracks(SPOTIFY_USER_ID,
-                                new_playlist_id,
-                                trimmed_uris,
-                                None)
+    # breaks up playlist appends to API to prevent overwhelming API
+    size_of_sublist = 25
+    for index in range(size_of_sublist,
+                       len(trimmed_uris) + size_of_sublist,
+                       size_of_sublist):
+        sublist_of_uris = trimmed_uris[index - size_of_sublist : index]
+        sp.user_playlist_add_tracks(SPOTIFY_USER_ID,
+                                    new_playlist_id,
+                                    sublist_of_uris,
+                                    None)
 
     return playlist_dict
 
