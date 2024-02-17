@@ -1,7 +1,6 @@
 colorama==0.4.6
-Flask==3.0.1
+Flask==3.0.2
 python-dotenv==1.0.1
 pytube==15.0.0
 pytube3==9.6.4
-Requests==2.31.0
 spotipy==2.23.0
