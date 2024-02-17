@@ -141,8 +141,8 @@ def convert_youtube_to_spotify():
     # iterates through video info to creacte search queries to Spotify API
     # URI - resource identifiers for objects in Spotify
     track_uris = []
+    successful_queries = [] # not currently interacted with
     queries_not_found = []
-    not_found_count = 0
     for song in extracted_songs:
         # creates query and executes API call
         search_query = f"{song['title']} {song['author']}"
@@ -160,15 +160,27 @@ def convert_youtube_to_spotify():
             try: # query successful
                 track_uri = search_result['tracks']['items'][0]['uri']
                 track_uris.append(track_uri)
+                successful_queries.append(search_query)
                 print(green('Success.'), end='')
                 break
             except: # query not successful (list index out of range)
                 queries_not_found.append(search_query)
-                not_found_count += 1
                 print(red('Failed.'), end='')
         print('') # prints newline
 
-    print(f'Track queries complete. {green(len(track_uris))} successes, {red(not_found_count)} failures.')
+    not_found = len(extracted_songs) - len(track_uris)
+    print(f'Track queries complete. {green(len(track_uris))} successes, {red(not_found)} failures.')
+
+    # generates err file of unsuccessful queries if not_found > 0
+    # i.e. if there ends up being a track that is not found
+    if not_found:
+        json_name, _ = os.path.splitext(JSON)
+        err_name = f'NOTFOUND_{json_name}.err'
+        with open(err_name, 'w') as errfile:
+            print(f'Writing unsuccessful queries to {red(err_name)}')
+            queries_not_found = list(set(queries_not_found)) # removes duplicates
+            for query in queries_not_found:
+                errfile.write(f'{query}\n')
     
     # removes duplicates while preserving order using list comprehension
     print(cyan('Removing duplicates.'))
@@ -190,7 +202,7 @@ def convert_youtube_to_spotify():
     for playlist in current_playlists:
         if(playlist['name'] == playlist_title):
             new_playlist_id = playlist['id']
-            print(cyan(f'Successfully created and found playlist.'))
+            print(cyan(f'Successfully created and identified playlist.'))
             break
     
     # breaks up playlist appends to API to prevent overwhelming API
@@ -198,15 +210,16 @@ def convert_youtube_to_spotify():
     for index in range(size_of_sublist,
                        len(trimmed_uris) + size_of_sublist,
                        size_of_sublist):
-        sublist_of_uris = trimmed_uris[index - size_of_sublist : index]
+        start = index - size_of_sublist
+        sublist_of_uris = trimmed_uris[start : index]
         sp.user_playlist_add_tracks(SPOTIFY_USER_ID,
                                     new_playlist_id,
                                     sublist_of_uris,
                                     None)
-
-    return playlist_dict
-
-    return 'Playlist successfully converted.'
+    
+    end_str = f'Playlist {playlist_title} successfully created and populated! Thank you for using Jaq\'s YtS converter!'
+    print(green(end_str))
+    return end_str
 
 
 # function to get the token info from the session
