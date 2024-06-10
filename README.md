@@ -26,7 +26,7 @@ An example `.env` file with the required hidden or sensitive environment variabl
 CLIENT_ID = client-id-from-Spotify-API
 CLIENT_SECRET = client-secret-from-Spotify-API
 FLASK_KEY = custom-key-that-can-be-anything
-SPOTIFY_USER_ID = Spotify-public-profile-user-ID
+[DEPRECATED FEATURE] SPOTIFY_USER_ID = Spotify-public-profile-user-ID
 ```
 
 ### requirements.txt
@@ -46,8 +46,10 @@ pip install -r requirements.txt
 
 For more information, please refer to the [Spotify for Developers Documentation](https://developer.spotify.com/).
 
-## Locating your Spotify User ID
+## Locating your Spotify User ID (DEPRECATED, NO LONGER NEEDED)
 
 1. Go to https://www.spotify.com/account/profile/ and log into your Spotfy account.
 2. Find `Username` and copy the string underneath the header.
 3. Paste the username into your `.env` flie (into `SPOTIFY_USER_ID` specifically).
+
+***NOTE:*** This documentation may be removed in a future commit, but currently will not be removed for the foreseeable future.

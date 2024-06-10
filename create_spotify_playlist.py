@@ -33,7 +33,7 @@ load_dotenv()
 CLIENT_ID = os.getenv('CLIENT_ID')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET')
 FLASK_KEY = os.getenv('FLASK_KEY')
-SPOTIFY_USER_ID = os.getenv('SPOTIFY_USER_ID')
+# SPOTIFY_USER_ID = os.getenv('SPOTIFY_USER_ID')
 
 # configures Flask app
 from flask import Flask, request, url_for, session, redirect # accesses HTTP requests
@@ -90,6 +90,7 @@ def convert_youtube_to_spotify():
 
     # create a Spotipy instance with the access token
     sp = spotipy.Spotify(auth=token_info['access_token'])
+    SPOTIFY_USER_ID = sp.current_user()['id']
 
 
     ### PLAYLIST CONVERSION
@@ -121,7 +122,6 @@ def convert_youtube_to_spotify():
     else:
         print(red('URL or JSON path not included.'))
         return 'URL or JSON path not included.'
-    
     playlist_title = playlist_dict['playlist_title']
     extracted_songs = playlist_dict['videos_info']
 
