@@ -195,3 +195,30 @@ if __name__ == '__main__':
                         help='Enables performance mode. Does not maintain playlist order.')
     args = parser.parse_args()
     main()
+
+    # from time import time
+    # start = time()
+    # playlist = pytube.Playlist("https://www.youtube.com/playlist?list=PLvaO_paR56p-SNDvQNboq2BXniEfxj8gQ")
+    # end = time()
+    # elapsed = end - start
+    # print(f'extraction: {elapsed:2f}')
+    
+    # start = time()
+    # dict = {}
+    # for index, video in enumerate(playlist.videos):
+    #     dict[index] = video
+    # end = time()
+    # elapsed = end - start
+    # print(f'conversion: {elapsed:2f}')
+    
+    # start = time()
+    # print(playlist)
+    # end = time()
+    # elapsed = end - start
+    # print(f'printing list: {elapsed:2f}')
+
+    # start = time()
+    # print(dict)
+    # end = time()
+    # elapsed = end - start
+    # print(f'printing dict: {elapsed:2f}')
