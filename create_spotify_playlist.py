@@ -24,8 +24,7 @@ MAX_REPEAT_QUERIES = None
 
 # custom libraries
 from colorful_errors import error_exit, red, green, cyan
-from extract_youtube_playlist import get_playlist, \
-    process_playlist, process_playlist_multithreaded
+from extract_youtube_playlist import get_playlist, process_playlist_multithreaded
 
 # loads in private .env variables
 from dotenv import load_dotenv
@@ -284,12 +283,8 @@ def url_extraction(url):
     playlist = get_playlist(url)
 
     # generates dictionary from playlist object
-    if args.performance:
-        print(cyan('Performance mode enabled. Playlist order will not be maintained.'))
-        playlist_dict = process_playlist_multithreaded(playlist)
-    else:
-        print(cyan('Deep-copy extraction enabled. Playlist order will be maintained.'))
-        playlist_dict = process_playlist(playlist)
+    print(cyan('Generating playlist dictionary.'))
+    playlist_dict = process_playlist_multithreaded(playlist)
 
     return playlist_dict
 
@@ -334,10 +329,6 @@ if __name__ == '__main__':
                         default=3,
                         type=int,
                         help='Maximum times to allow failed query.')
-    parser.add_argument('-p',
-                        '--performance',
-                        action='store_true',
-                        help='Enables performance mode. Does not maintain playlist order.')
     args = parser.parse_args()
     URL = args.url
     JSON = args.json

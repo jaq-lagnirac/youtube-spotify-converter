@@ -42,7 +42,7 @@ def get_playlist(url):
     return playlist
 
 
-def extract_video_info(video):
+def extract_video_info(index, video):
     """ Streamlines extraction
     
     A function which breaks down a pytube video object
@@ -50,17 +50,18 @@ def extract_video_info(video):
     dictionary containing the relevant information
 
     Args:
-        video (Video): pytube video object
+        index (int): the index of the object
+        video (Video/YouTube): pytube video object
     
     Returns:
-        dict: A dictionary with the relevant video info
+        tuple (int, dict): A tuple with the relevant video info
     """
 
     info_dict = {
         'title' : video.title,
         'author' : video.author
     }
-    return info_dict
+    return (index, info_dict)
 
 
 def process_playlist(playlist):
@@ -73,7 +74,11 @@ def process_playlist(playlist):
 
     Returns:
         dict: A dictionary containing the relevant playlist information
-            
+    
+    PLEASE NOTE: This function is now deprecated. process_playlist_multithreaded()
+    now maintains order of playlist, rendering this function obsolete as it linearly
+    searches the playlist in a way that takes exponentially longer. This function
+    may be removed in a future commit, but for now remains in the code for posterity.
     """
 
     print(f'Playlist: {playlist.title}')
@@ -83,7 +88,7 @@ def process_playlist(playlist):
     for video in playlist.videos:
         try:
             print(f'Title: {video.title} - Author: {video.author}')
-            video_dict = extract_video_info(video)
+            _, video_dict = extract_video_info(0, video) # 0 is a dummy value
             videos_info.append(video_dict)
         except:
             print(f'-----Error with {video.url}-----')
@@ -102,8 +107,7 @@ def process_playlist_multithreaded(playlist):
     """Organizes playlist extraction with multithreading
     
     A function to extract video information from a playlist
-    using a ThreadPool. DOES NOT MAINTAIN ORDER OF THE INPUTTED
-    PLAYLIST
+    using a ThreadPool. NOW MAINTAINS THE ORDER OF THE PLAYLIST
     
     Args:
         playlist (Playlist): A pytube Playlist object
@@ -119,9 +123,10 @@ def process_playlist_multithreaded(playlist):
     processes = []
     errors = []
     with ThreadPoolExecutor(max_workers = multiprocessing.cpu_count()) as executor:
-        for video in playlist.videos:
+        for index, video in enumerate(playlist.videos):
+        # stores index along with video object to allow for sorting down the line
             try:
-                processes.append(executor.submit(extract_video_info, video))
+                processes.append(executor.submit(extract_video_info, index, video))
                 #print(f'Title: {video.title} - Author: {video.author}')
             except:
                 print(f'-----Error with {video.url}-----')
@@ -134,9 +139,17 @@ def process_playlist_multithreaded(playlist):
     
     playlist_dict = {
         'playlist_title' : playlist.title,
-        'videos_info' : videos_info,
+        'videos_info' : list(dict(sorted(videos_info)).values()),
         'errors' : errors
     }
+
+    ### Explaining the nifty little one-liner "list(dict(sorted(videos_info)).values())":
+    #
+    # videos_info is a list of tuples that cotains (int/index, dict/info-for-video).
+    # the list is sorted by index using sorted() with a supposed O(n*log(n)) (on par with
+    # quicksort) then converted to a dict (one can convert [(key, value), (key, value),...]
+    # to a dictionary). The values/individual-video-info is then extracted from the dict,
+    # then converted to a list in order to send off into the JSON file or accompanying program
 
     return playlist_dict
 
@@ -163,12 +176,8 @@ def main():
     playlist = get_playlist(url)
 
     # generates dictionary from playlist object
-    if args.performance:
-        print(cyan('Performance mode enabled. Playlist order will not be maintained.'))
-        playlist_dict = process_playlist_multithreaded(playlist)
-    else:
-        print(cyan('Deep-copy extraction enabled. Playlist order will be maintained.'))
-        playlist_dict = process_playlist(playlist)
+    print(cyan('Generating playlist dictionary.'))
+    playlist_dict = process_playlist_multithreaded(playlist)
 
     # trims name to create JSON file
     json_name = playlist_dict['playlist_title']
@@ -189,12 +198,12 @@ if __name__ == '__main__':
     parser.add_argument('url',
                         nargs='?',
                         help='Youtube playlist URL')
-    parser.add_argument('-p',
-                        '--performance',
-                        action='store_true',
-                        help='Enables performance mode. Does not maintain playlist order.')
     args = parser.parse_args()
     main()
+
+
+    # playlist = pytube.Playlist("https://www.youtube.com/playlist?list=PLvaO_paR56p-SNDvQNboq2BXniEfxj8gQ")
+    # print(process_playlist_multithreaded(playlist))
 
     # from time import time
     # start = time()
