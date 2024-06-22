@@ -2,10 +2,12 @@
 # A script to extract a Youtube playlist into
 # a text format
 
+import os
 import pytube # accesses youtube
 import re # clean up names
 import json # output extracted information
-import argparse
+import argparse # command-line tools
+from tqdm import tqdm # progress bar
 
 # custom error messaging and text coloring
 from colorful_errors import error_exit, red, green, cyan
@@ -118,24 +120,27 @@ def process_playlist_multithreaded(playlist):
     """
 
     print(f'Playlist: {playlist.title}')
+    print(cyan('Beginning video information extraction...'))
 
     # processes tasks using ThreadPoolExecutor
     processes = []
     errors = []
-    with ThreadPoolExecutor(max_workers = multiprocessing.cpu_count()) as executor:
-        for index, video in enumerate(playlist.videos):
-        # stores index along with video object to allow for sorting down the line
-            try:
-                processes.append(executor.submit(extract_video_info, index, video))
-                #print(f'Title: {video.title} - Author: {video.author}')
-            except:
-                print(f'-----Error with {video.url}-----')
-                errors.append(video)
-
-    # adds completed tasks to a list
     videos_info = []
-    for task in as_completed(processes):
-        videos_info.append(task.result())
+    with tqdm(total = len(playlist)) as pbar:
+        with ThreadPoolExecutor(max_workers = multiprocessing.cpu_count()) as executor:
+            for index, video in enumerate(playlist.videos):
+            # stores index along with video object to allow for sorting down the line
+                try:
+                    processes.append(executor.submit(extract_video_info, index, video))
+                    # print(f'Title: {video.title} - Author: {video.author}')
+                except:
+                    print(f'-----Error with {video.url}-----')
+                    errors.append(video)
+
+            # adds completed tasks to a list
+            for task in as_completed(processes):
+                videos_info.append(task.result())
+                pbar.update(1)
     
     playlist_dict = {
         'playlist_title' : playlist.title,
@@ -183,14 +188,15 @@ def main():
     json_name = playlist_dict['playlist_title']
     json_name = re.sub('[^0-9a-zA-Z ]+', '', json_name)
     json_name = json_name.replace(' ', '_')
+    json_file = f'{json_name}.json'
 
     # dumps info into JSON file output
-    with open(f'{json_name}.json', 'w') as outfile:
+    with open(json_file, 'w') as outfile:
         outfile.write(json.dumps(playlist_dict,
                                  ensure_ascii=False,
                                  indent=4))
     
-    print(green(f'Extraction complete, data saved in {json_name}.json'))
+    print(green(f'Extraction complete, data saved in {os.path.abspath(json_file)}'))
 
 
 if __name__ == '__main__':
@@ -200,34 +206,3 @@ if __name__ == '__main__':
                         help='Youtube playlist URL')
     args = parser.parse_args()
     main()
-
-
-    # playlist = pytube.Playlist("https://www.youtube.com/playlist?list=PLvaO_paR56p-SNDvQNboq2BXniEfxj8gQ")
-    # print(process_playlist_multithreaded(playlist))
-
-    # from time import time
-    # start = time()
-    # playlist = pytube.Playlist("https://www.youtube.com/playlist?list=PLvaO_paR56p-SNDvQNboq2BXniEfxj8gQ")
-    # end = time()
-    # elapsed = end - start
-    # print(f'extraction: {elapsed:2f}')
-    
-    # start = time()
-    # dict = {}
-    # for index, video in enumerate(playlist.videos):
-    #     dict[index] = video
-    # end = time()
-    # elapsed = end - start
-    # print(f'conversion: {elapsed:2f}')
-    
-    # start = time()
-    # print(playlist)
-    # end = time()
-    # elapsed = end - start
-    # print(f'printing list: {elapsed:2f}')
-
-    # start = time()
-    # print(dict)
-    # end = time()
-    # elapsed = end - start
-    # print(f'printing dict: {elapsed:2f}')
